@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Office Resume Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script>
+        // Required for pdf.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .loader {
+            border: 5px solid #f3f3f3; /* Light grey */
+            border-top: 5px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        .sub-loader { /* Smaller loader for advice section */
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .btn-secondary {
+            @apply bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-150 ease-in-out transform hover:scale-105;
+        }
+        .btn-tertiary { /* For the new advice button */
+            @apply bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 px-6 rounded-full shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105 text-base border-2 border-yellow-500;
+        }
+        .card {
+            @apply bg-white rounded-xl shadow-2xl px-8 md:px-10; 
+        }
+        /* Custom styles for drag and drop area */
+        .drop-area {
+            @apply border-2 border-dashed border-slate-500 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ease-in-out;
+            min-height: 200px; /* Ensure enough space for drag and drop */
+        }
+        .drop-area.hover {
+            @apply border-blue-500 bg-slate-700;
+        }
+        #characterImage {
+            max-height: 300px;
+            object-fit: cover;
+            width: 200px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-700 min-h-screen flex flex-col items-center justify-center p-4 text-slate-100">
+
+    <!-- Top black bar with centered logo -->
+    <div class="w-full bg-black py-4 flex justify-center items-center fixed top-0 left-0 right-0 z-50">
+        <img src="the-office-tv-show-sign-logo-png_seeklogo-438510 - Edited - Edited.png" alt="The Office Logo" class="h-12 md:h-16 w-auto" />
+    </div>
+
+    <div class="container mx-auto w-full mt-20">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                Which Office Character Are You?
+            </h1>
+            <p class="text-slate-300 mt-2 text-lg">Bears... Beets... Better Resumes.</p>
+        </header>
+
+        <!-- Flex row for cast image and upload section -->
+        <div class="w-full flex flex-col md:flex-row items-start justify-center mb-8 gap-8">
+            <div id="castImageContainer" class="flex items-center">
+                <img id="castImage" src="the-office-cast-050824-42ce9cb147434a86b85de50216089e38.jpg" alt="The Office Cast" class="rounded-xl shadow-lg object-cover h-[450px]" />
+            </div>
+            <div class="flex flex-col items-center justify-center relative">
+                <div id="fileUploadSection" class="mb-6 flex flex-col items-center justify-center rounded-xl">
+                    <div id="dropArea" class="drop-area bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white flex flex-col items-center justify-center rounded-xl transition-colors duration-200 h-[450px] w-[450px] border-4 border-pink-500">
+                        <p class="text-lg font-semibold mb-2">Drag & drop your resume here</p>
+                        <svg class="w-16 h-16 mb-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        <p class="mb-4">or</p>
+                        <!-- Hidden file input, triggered by the button below -->
+                        <input type="file" id="resumeFile" accept=".pdf" class="hidden">
+                        <button id="browseFilesButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-150 ease-in-out transform hover:scale-105">
+                            Browse Files
+                        </button>
+                        <p class="text-sm text-slate-400 mt-4 mb-4 italic py-2">Only PDF files are accepted</p>
+                    </div>
+                    <p id="fileError" class="text-red-400 text-sm text-center mt-2 hidden"></p>
+                </div>
+                <div id="loadingIndicator" class="hidden h-[450px] w-[450px] bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white border-4 border-pink-500 rounded-xl flex flex-col items-center justify-center text-center">
+                    <img id="loadingCastImage" src="" alt="Loading Cast" class="rounded-full w-40 h-40 object-cover mx-auto my-auto border-4 border-blue-500" style="display:none;" />
+                </div>
+            </div>
+        </div>
+
+        <p id="statusMessage" class="text-center text-slate-400 mb-4 hidden"></p>
+
+        <div id="resultArea" class="hidden text-center rounded-xl">
+            <h2 id="characterName" class="text-3xl font-semibold text-blue-400 mb-4"></h2>
+            <img id="characterImage" src="https://placehold.co/200x300/777/FFF?text=Character" alt="Character Image" class="mx-auto rounded-lg shadow-lg mb-6 border-4 border-blue-500">
+            <h3 class="text-xl font-medium text-slate-200 mb-3">Oh, so you're basically:</h3>
+            <ul id="characterReasons" class="list-disc list-inside text-left text-slate-300 space-y-2 mx-auto max-w-md">
+            </ul>
+            
+            <div id="careerAdviceSection" class="mt-6 hidden">
+                <button id="getAdviceButton" class="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105 text-base border-2 border-blue-400 mb-3">
+                    ✨ Get Career "Advice" from <span id="adviceCharacterName">Character</span>
+                </button>
+                <div id="adviceLoadingIndicator" class="hidden sub-loader"></div>
+                <div id="adviceDisplay" class="text-left text-slate-300 bg-slate-700 p-4 rounded-lg shadow max-w-md mx-auto">
+                    </div>
+                <p id="adviceApiError" class="text-red-400 text-sm mt-2"></p>
+            </div>
+        </div>
+        <p id="apiError" class="text-red-400 text-center mt-4"></p>
+
+        <div id="uploadAnotherSection" class="mt-6 text-center hidden">
+            <button id="uploadAnotherButton" class="btn-secondary">
+                Upload Another Resume (If You Must)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const resumeFileInput = document.getElementById('resumeFile');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const statusMessage = document.getElementById('statusMessage');
+        const resultArea = document.getElementById('resultArea');
+        const characterNameDisplay = document.getElementById('characterName');
+        const characterImageDisplay = document.getElementById('characterImage');
+        const characterReasonsList = document.getElementById('characterReasons');
+        const fileError = document.getElementById('fileError');
+        const apiError = document.getElementById('apiError');
+        
+        const fileUploadSection = document.getElementById('fileUploadSection');
+        const uploadAnotherSection = document.getElementById('uploadAnotherSection');
+        const uploadAnotherButton = document.getElementById('uploadAnotherButton');
+
+        // New elements for drag and drop
+        const dropArea = document.getElementById('dropArea');
+        const browseFilesButton = document.getElementById('browseFilesButton');
+
+        // New elements for career advice
+        const careerAdviceSection = document.getElementById('careerAdviceSection');
+        const getAdviceButton = document.getElementById('getAdviceButton');
+        const adviceCharacterNameSpan = document.getElementById('adviceCharacterName');
+        const adviceLoadingIndicator = document.getElementById('adviceLoadingIndicator');
+        const adviceDisplay = document.getElementById('adviceDisplay');
+        const adviceApiError = document.getElementById('adviceApiError');
+
+        let extractedText = "";
+        let currentMatchedCharacter = ""; // To store the name of the matched character
+
+        const characterImages = {
+            "Michael Scott": "https://storage.googleapis.com/officecharacters/cast-the-office-michael-scott.webp",
+            "Dwight Schrute": "https://storage.googleapis.com/officecharacters/cast-the-office-dwight-schrute.webp",
+            "Jim Halpert": "https://storage.googleapis.com/officecharacters/cast-the-office-jim-halpert.webp",
+            "Pam Beesly": "https://storage.googleapis.com/officecharacters/cast-the-office-pam-beesly.webp",
+            "Stanley Hudson": "https://storage.googleapis.com/officecharacters/cast-the-office-stanley-hudson.webp",
+            "Angela Martin": "https://storage.googleapis.com/officecharacters/cast-the-office-angela-martin.webp",
+            "Kevin Malone": "https://storage.googleapis.com/officecharacters/cast-the-office-kevin-malone.webp",
+            "Oscar Martinez": "https://storage.googleapis.com/officecharacters/cast-the-office-oscar-nunez.webp",
+            "Andy Bernard": "https://storage.googleapis.com/officecharacters/cast-the-office-andy-bernard.webp",
+            "Phyllis Vance": "https://storage.googleapis.com/officecharacters/cast-the-office-phyllis-vance.webp",
+            "Erin Hannon": "https://storage.googleapis.com/officecharacters/cast-the-office-erin-hannon.webp",
+            "Toby Flenderson": "https://storage.googleapis.com/officecharacters/cast-the-office-toby-flenderson.webp",
+            "Creed Bratton": "https://storage.googleapis.com/officecharacters/cast-the-office-creed-bratton.webp",
+            "Meredith Palmer": "https://storage.googleapis.com/officecharacters/cast-the-office-meredith-palmer.webp",
+            "Darryl Philbin": "https://storage.googleapis.com/officecharacters/cast-the-office-darryl-philbin.webp",
+            "Ryan Howard": "https://storage.googleapis.com/officecharacters/cast-the-office-ryan-howard.webp",
+            "Kelly Kapoor": "https://storage.googleapis.com/officecharacters/cast-the-office-kelly-kapoor.webp",
+            "Gabe Lewis": "https://storage.googleapis.com/officecharacters/cast-the-office-gabe-lewis.webp",
+            "Holly Flax": "https://storage.googleapis.com/officecharacters/cast-the-office-holly-flax.jpg",
+            "Jan Levinson": "https://storage.googleapis.com/officecharacters/cast-the-office-jan-levinson.jpg",
+            "David Wallace": "https://storage.googleapis.com/officecharacters/cast-the-office-david-wallace.webp",
+            "Default Character": "https://storage.googleapis.com/officecharacters/default.jpg"
+        };
+
+        const mainCard = document.querySelector('main.card');
+
+        // In the script, hide castImageContainer when showing resultArea, and show it when resetting for new upload
+        const castImageContainer = document.getElementById('castImageContainer');
+
+        let loadingCastInterval = null;
+        const loadingCastImage = document.getElementById('loadingCastImage');
+        const loadingIndicatorDiv = document.getElementById('loadingIndicator');
+        const characterImageUrls = Object.values(characterImages).filter(url => url && url.startsWith('http'));
+        let castIndex = 0;
+
+        function showLoadingCastCarousel() {
+            if (!loadingCastImage || characterImageUrls.length === 0) return;
+            loadingCastImage.style.display = 'block';
+            castIndex = 0;
+            loadingCastImage.src = characterImageUrls[castIndex];
+            loadingCastInterval = setInterval(() => {
+                castIndex = (castIndex + 1) % characterImageUrls.length;
+                loadingCastImage.src = characterImageUrls[castIndex];
+            }, 900);
+        }
+        function hideLoadingCastCarousel() {
+            if (loadingCastInterval) clearInterval(loadingCastInterval);
+            if (loadingCastImage) loadingCastImage.style.display = 'none';
+        }
+
+        function resetUIForNewUpload() {
+            resultArea.classList.add('hidden');
+            apiError.textContent = '';
+            fileError.textContent = '';
+            fileError.classList.add('hidden');
+            statusMessage.textContent = '';
+            characterNameDisplay.textContent = '';
+            characterImageDisplay.src = 'https://placehold.co/200x300/777/FFF?text=Character';
+            characterImageDisplay.alt = 'Character Image';
+            characterReasonsList.innerHTML = '';
+            extractedText = '';
+            currentMatchedCharacter = '';
+            resumeFileInput.value = '';
+            fileUploadSection.classList.remove('hidden');
+            uploadAnotherSection.classList.add('hidden');
+            loadingIndicator.classList.add('hidden');
+            // Reset career advice section
+            careerAdviceSection.classList.add('hidden');
+            adviceDisplay.innerHTML = '';
+            adviceApiError.textContent = '';
+            getAdviceButton.disabled = false;
+            // Remove background from main card
+            if (mainCard) mainCard.classList.remove('bg-slate-800');
+            if (castImageContainer) castImageContainer.classList.remove('hidden');
+        }
+
+        uploadAnotherButton.addEventListener('click', resetUIForNewUpload);
+
+        // Function to handle file processing (from drag/drop or browse)
+        async function handleFile(file) {
+            resetUIForNewUpload(); // Reset UI whenever a new file is handled
+            fileUploadSection.classList.remove('hidden'); // Ensure upload section is visible initially
+            uploadAnotherSection.classList.add('hidden'); 
+
+            extractedText = ""; 
+
+            if (!file) {
+                return;
+            }
+
+            if (file.type !== "application/pdf") {
+                fileError.textContent = "Seriously? A PDF. Only PDFs. Get it right.";
+                fileError.classList.remove('hidden');
+                statusMessage.textContent = "File error. Shocker.";
+                uploadAnotherSection.classList.remove('hidden'); 
+                fileUploadSection.classList.remove('hidden'); // Keep file upload visible
+                return;
+            }
+
+            statusMessage.textContent = "Ugh, fine, processing your PDF...";
+            loadingIndicator.classList.remove('hidden');
+            showLoadingCastCarousel();
+            fileUploadSection.classList.add('hidden'); // Hide file upload section during processing
+            if (mainCard) mainCard.classList.add('bg-slate-800');
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let textContent = "";
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const text = await page.getTextContent();
+                    textContent += text.items.map(item => item.str).join(" ") + "\n";
+                }
+                extractedText = textContent.trim();
+
+                if (extractedText.length > 0) {
+                    statusMessage.textContent = "PDF processed. Brace yourself for the analysis...";
+                    await performAnalysis(); 
+                } else {
+                    statusMessage.textContent = "This PDF is as empty as Michael's promises.";
+                    fileError.textContent = "No text found in PDF. Are you even trying?";
+                    fileError.classList.remove('hidden');
+                    loadingIndicator.classList.add('hidden'); 
+                    uploadAnotherSection.classList.remove('hidden'); 
+                    fileUploadSection.classList.remove('hidden'); // Show file upload on error
+                }
+            } catch (error) {
+                console.error("Error processing PDF:", error);
+                statusMessage.textContent = "PDF processing error. Was it even a real PDF?";
+                fileError.textContent = "Could not read PDF. It's probably cursed, like Toby.";
+                fileError.classList.remove('hidden');
+                loadingIndicator.classList.add('hidden');
+                uploadAnotherSection.classList.remove('hidden'); 
+                fileUploadSection.classList.remove('hidden'); // Show file upload on error
+            }
+        }
+
+        async function performAnalysis() {
+            // ... (rest of the performAnalysis function up to displaying character match)
+            if (!extractedText) {
+                apiError.textContent = "No resume text to analyze. Please upload a PDF first.";
+                statusMessage.textContent = "Analysis failed: No text.";
+                uploadAnotherSection.classList.remove('hidden'); 
+                return;
+            }
+
+            loadingIndicator.classList.remove('hidden');
+            showLoadingCastCarousel();
+            statusMessage.textContent = "Consulting the Dunder Mifflin archives (and Gemini)... This might take a moment.";
+            resultArea.classList.add('hidden'); 
+            careerAdviceSection.classList.add('hidden'); // Hide advice section during main analysis
+            adviceDisplay.innerHTML = ''; // Clear previous advice
+            adviceApiError.textContent = ''; // Clear previous advice error
+            apiError.textContent = '';
+            fileUploadSection.classList.add('hidden'); 
+
+            const prompt = `You are an expert character analyst with deep knowledge of The Office (US). Given the following resume, analyze the person's professional traits, work habits, and personality style. Then, select the character from The Office they most closely resemble — not just in role, but in attitude, behavior, strengths, and weaknesses. I need the character's full name. Consider all characters from the show, not just main characters. Use nuanced reasoning, and avoid always picking the most obvious parallels. Then, give me exactly three bullet points explaining why. Make these reasons hilariously SASSY, EDGY, and SARCASTIC. Don't hold back. Imply their incompetence or quirks through The Office lens. For example, if they mention 'team player', you could say 'Oh, a "team player"? So, you're basically the Jim Halpert of looking busy while doing nothing?' or if they list many skills, 'Wow, a jack-of-all-trades, master of... well, probably none, just like Creed with his "job".'. Resume text: \n\n${extractedText}`;
+            
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            characterName: { type: "STRING", description: "The full name of The Office (US) character (e.g., Michael Scott, Dwight K. Schrute, James Halpert, Ryan Howard, Kelly Kapoor)." },
+                            reasons: {
+                                type: "ARRAY",
+                                description: "An array of exactly three hilariously sassy, edgy, and sarcastic strings explaining the character match.",
+                                items: { type: "STRING" }
+                            }
+                        },
+                        required: ["characterName", "reasons"]
+                    }
+                }
+            };
+
+            const apiKey = "AIzaSyA2nb8j1C5guahteIprf4zS6EdM5CHVeWw"; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    console.error("API Error Body:", errorBody);
+                    throw new Error(`API request failed with status ${response.status}.`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    
+                    const rawJsonText = result.candidates[0].content.parts[0].text;
+                    let parsedJson;
+                    try {
+                        parsedJson = JSON.parse(rawJsonText); 
+                    } catch (e) {
+                        console.error("Failed to parse JSON from Gemini:", rawJsonText);
+                        throw new Error("Received malformed JSON response from AI. Probably couldn't handle the sass.");
+                    }
+                    
+                    const { characterName, reasons } = parsedJson;
+
+                    if (characterName && reasons && Array.isArray(reasons) && reasons.length > 0) { 
+                        currentMatchedCharacter = characterName; // Store for advice feature
+                        adviceCharacterNameSpan.textContent = currentMatchedCharacter.split(" ")[0]; // Just first name for button
+                        
+                        // Use a fallback for character images if the main one doesn't load
+                        const normalizedCharacterName = Object.keys(characterImages).find(key => 
+                            key.toLowerCase() === currentMatchedCharacter.toLowerCase().trim() 
+                        ) || "Default Character";
+                        
+                        characterImageDisplay.src = characterImages[normalizedCharacterName];
+                        characterNameDisplay.textContent = currentMatchedCharacter;
+                        characterImageDisplay.alt = currentMatchedCharacter;
+                        
+                        characterImageDisplay.onerror = () => {
+                            characterImageDisplay.src = 'https://placehold.co/200x300/CCCCCC/FFFFFF?text=Image+Not+Found';
+                            characterImageDisplay.alt = `${currentMatchedCharacter} (Image not found, typical)`;
+                        };
+
+                        characterReasonsList.innerHTML = '';
+                        reasons.slice(0, 3).forEach(reason => { 
+                            const li = document.createElement('li');
+                            li.textContent = reason;
+                            characterReasonsList.appendChild(li);
+                        });
+                        resultArea.classList.remove('hidden');
+                        careerAdviceSection.classList.remove('hidden'); // Show advice section
+                        getAdviceButton.disabled = false; // Ensure advice button is enabled
+                        adviceDisplay.innerHTML = ''; // Clear previous advice
+                        adviceApiError.textContent = ''; // Clear previous advice error
+
+                        statusMessage.textContent = "Alright, we've figured you out...";
+                        if (castImageContainer) castImageContainer.classList.add('hidden');
+                    } else {
+                        console.error("Invalid data structure in parsed JSON:", parsedJson);
+                        throw new Error("Gemini's response was weird. Missing character name or reasons. Too much sass, perhaps?");
+                    }
+                } else {
+                     console.error("No valid candidate in Gemini response:", result);
+                    throw new Error("Gemini's playing hard to get. No valid response.");
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API or processing response:", error);
+                apiError.textContent = `Error: ${error.message} + ${apiUrl} + Try not to break it next time, okay?`;
+                statusMessage.textContent = "Analysis failed. Obviously.";
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                hideLoadingCastCarousel();
+                uploadAnotherSection.classList.remove('hidden'); 
+            }
+        }
+
+        getAdviceButton.addEventListener('click', async () => {
+            if (!extractedText || !currentMatchedCharacter) {
+                adviceApiError.textContent = "Need a character match and resume text first. Duh.";
+                return;
+            }
+
+            adviceLoadingIndicator.classList.remove('hidden');
+            adviceDisplay.innerHTML = '';
+            adviceApiError.textContent = '';
+            getAdviceButton.disabled = true;
+
+            // More specific character traits can be added here if known, or let Gemini infer from the name.
+            const advicePrompt = `You ARE ${currentMatchedCharacter} from the US TV show 'The Office'. Based on the following resume text, give this person 2-3 pieces of career 'advice'. Deliver it in your unique voice and personality (e.g., Michael's misguided enthusiasm, Dwight's intensity, Stanley's indifference, Pam's quiet encouragement, Jim's sarcasm, Angela's sternness, Kevin's simplicity, Oscar's intellectualism, Creed's absurdity, etc.). Make it sassy, edgy, and sarcastic, consistent with your character. Resume text: \n\n${extractedText}`;
+
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: advicePrompt }] }],
+                // No specific schema, just want text back for advice
+            };
+            
+            const apiKey = "AIzaSyA2nb8j1C5guahteIprf4zS6EdM5CHVeWw"; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`Advice API request failed with status ${response.status}: ${errorBody}`);
+                }
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const adviceText = result.candidates[0].content.parts[0].text;
+                    // Simple formatting: replace newlines with <br> and wrap paragraphs
+                    const formattedAdvice = adviceText.split('\n').filter(p => p.trim() !== '').map(p => `<p class="mb-2">${p}</p>`).join('');
+                    adviceDisplay.innerHTML = formattedAdvice || "Looks like they're speechless. Or maybe that IS the advice.";
+                } else {
+                    throw new Error("No advice content in Gemini response.");
+                }
+
+            } catch (error) {
+                console.error("Error getting career advice:", error);
+                adviceApiError.textContent = `Error getting advice: ${error.message}. Typical.`;
+            } finally {
+                adviceLoadingIndicator.classList.add('hidden');
+                getAdviceButton.disabled = false;
+            }
+        });
+
+        // Event listener for hidden file input (for "Browse Files" button)
+        resumeFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        // Event listener for "Browse Files" button click
+        browseFilesButton.addEventListener('click', () => {
+            resumeFileInput.click(); // Programmatically click the hidden file input
+        });
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            // remove old background
+            dropArea.classList.remove('from-blue-900', 'via-indigo-900', 'to-purple-900');
+            // add new background
+            dropArea.classList.add('from-pink-500', 'via-red-500', 'to-yellow-500');
+        }
+
+        function unhighlight(e) {
+            // remove new background
+            dropArea.classList.remove('from-pink-500', 'via-red-500', 'to-yellow-500');
+            // add old background back
+            dropArea.classList.add('from-blue-900', 'via-indigo-900', 'to-purple-900');
+        }
+
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            handleFile(files[0]);
+        }
+
+    </script>
+</body>
+</html>
