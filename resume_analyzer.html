@@ -50,7 +50,7 @@
         }
         /* Custom styles for drag and drop area */
         .drop-area {
-            @apply border-2 border-dashed border-slate-500 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ease-in-out;
+            @apply border-2 border-dashed border-slate-500 rounded-xl p-4 md:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ease-in-out;
             min-height: 200px; /* Ensure enough space for drag and drop */
         }
         .drop-area.hover {
@@ -63,15 +63,20 @@
         }
         .advice-text {
             font-family: 'Lora', serif;
-            @apply text-xl text-slate-200 relative z-10;
+            @apply text-slate-200 relative z-10;
         }
         .advice-text::before {
-            content: '“';
-            @apply text-7xl text-purple-500/50 font-bold absolute -left-5 -top-5 z-0;
+            content: '"';
+            @apply text-4xl md:text-7xl text-purple-500/50 font-bold absolute -left-2 md:-left-5 -top-2 md:-top-5 z-0;
         }
          .advice-text::after {
-            content: '”';
-            @apply text-7xl text-purple-500/50 font-bold absolute -right-5 -bottom-7 z-0;
+            content: '"';
+            @apply text-4xl md:text-7xl text-purple-500/50 font-bold absolute -right-2 md:-right-5 -bottom-4 md:-bottom-7 z-0;
+        }
+        
+        /* Ensure touch targets are appropriately sized */
+        .touch-manipulation {
+            touch-action: manipulation;
         }
     </style>
 </head>
@@ -82,38 +87,38 @@
         <img id="logoImage" src="the-office-tv-show-sign-logo-png_seeklogo-438510 - Edited - Edited.png" alt="The Office Logo" class="h-12 md:h-16 w-auto cursor-pointer" />
     </div>
 
-    <div class="container mx-auto w-full mt-20">
-        <header class="text-center mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+    <div class="container mx-auto w-full mt-20 px-4">
+        <header class="text-center mb-6 md:mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 px-2">
                 Dunder Mifflin Resume Co.
             </h1>
-            <p class="text-slate-300 mt-2 text-lg">Bears... Beets... Better Resumes.</p>
+            <p class="text-slate-300 mt-2 text-base md:text-lg px-2">Bears... Beets... Better Resumes.</p>
         </header>
 
         <!-- Flex row for cast image and upload section -->
-        <div class="w-full flex flex-col md:flex-row items-start justify-center mb-8 gap-8">
-            <div id="castImageContainer" class="flex items-center">
-                <img id="castImage" src="the-office-cast-050824-42ce9cb147434a86b85de50216089e38.jpg" alt="The Office Cast" class="rounded-xl shadow-lg object-cover h-[450px]" />
+        <div class="w-full flex flex-col md:flex-row items-start justify-center mb-8 gap-4 md:gap-8 px-2 md:px-0">
+            <div id="castImageContainer" class="flex items-center justify-center w-full md:w-auto">
+                <img id="castImage" src="the-office-cast-050824-42ce9cb147434a86b85de50216089e38.jpg" alt="The Office Cast" class="rounded-xl shadow-lg object-cover h-[250px] md:h-[450px] w-auto max-w-full" />
             </div>
-            <div class="flex flex-col items-center justify-center relative">
+            <div class="flex flex-col items-center justify-center relative w-full md:w-auto">
                 <div id="fileUploadSection" class="mb-6 flex flex-col items-center justify-center rounded-xl">
-                    <div id="dropArea" class="drop-area bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white flex flex-col items-center justify-center rounded-xl transition-colors duration-200 h-[450px] w-[450px] border-4 border-pink-500">
-                        <p class="text-lg font-semibold mb-2">Drag & drop your resume here</p>
-                        <svg class="w-16 h-16 mb-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <div id="dropArea" class="drop-area bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white flex flex-col items-center justify-center rounded-xl transition-colors duration-200 h-[300px] w-[300px] md:h-[450px] md:w-[450px] border-4 border-pink-500">
+                        <p class="text-base md:text-lg font-semibold mb-2 px-2 text-center">Drag & drop your resume here</p>
+                        <svg class="w-12 h-12 md:w-16 md:h-16 mb-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
                         <p class="mb-4">or</p>
                         <!-- Hidden file input, triggered by the button below -->
                         <input type="file" id="resumeFile" accept=".pdf" class="hidden">
-                        <button id="browseFilesButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-150 ease-in-out transform hover:scale-105">
+                        <button id="browseFilesButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-150 ease-in-out transform hover:scale-105 min-h-[44px] touch-manipulation">
                             Browse Files
                         </button>
-                        <p class="text-sm text-slate-400 mt-4 mb-4 italic py-2">Only PDF files are accepted</p>
+                        <p class="text-xs md:text-sm text-slate-400 mt-4 mb-4 italic py-2 px-2 text-center">Only PDF files are accepted</p>
                     </div>
-                    <p id="fileError" class="text-red-400 text-sm text-center mt-2 hidden"></p>
+                    <p id="fileError" class="text-red-400 text-sm text-center mt-2 hidden px-2"></p>
                 </div>
-                <div id="loadingIndicator" class="hidden h-[450px] w-[450px] bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white border-4 border-pink-500 rounded-xl flex flex-col items-center justify-center text-center">
-                    <img id="loadingCastImage" src="" alt="Loading Cast" class="rounded-full w-40 h-40 object-cover mx-auto my-auto border-4 border-blue-500" style="display:none;" />
+                <div id="loadingIndicator" class="hidden h-[300px] w-[300px] md:h-[450px] md:w-[450px] bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white border-4 border-pink-500 rounded-xl flex flex-col items-center justify-center text-center">
+                    <img id="loadingCastImage" src="" alt="Loading Cast" class="rounded-full w-32 h-32 md:w-40 md:h-40 object-cover mx-auto my-auto border-4 border-blue-500" style="display:none;" />
                 </div>
             </div>
         </div>
@@ -124,9 +129,9 @@
             <!-- Advice cards will be dynamically inserted here -->
         </div>
         
-        <div id="realAdviceSection" class="hidden text-center mt-12 w-full max-w-4xl mx-auto">
-            <p class="text-xl text-slate-300 mb-4">Tired of the jokes? Ready for some *actually* helpful advice?</p>
-            <a href="#" id="getRealAdviceButton" class="inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105 text-xl">
+        <div id="realAdviceSection" class="hidden text-center mt-8 md:mt-12 w-full max-w-4xl mx-auto px-4">
+            <p class="text-lg md:text-xl text-slate-300 mb-4 px-2">Tired of the jokes? Ready for some *actually* helpful advice?</p>
+            <a href="#" id="getRealAdviceButton" class="inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 md:px-8 rounded-lg shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105 text-lg md:text-xl min-h-[44px] touch-manipulation">
                 Get a Serious Resume Review
             </a>
         </div>
@@ -357,12 +362,12 @@
                 const characterImageURL = characterImages[item.character_name] || characterImages["Default Character"];
                 
                 const cardHTML = `
-                    <div class="bg-indigo-950/80 backdrop-blur-sm rounded-xl p-6 flex items-start gap-6 transition-all duration-300 hover:bg-indigo-900/90 mx-auto" style="max-width: 800px;">
-                        <img src="${characterImageURL}" alt="${item.character_name}" class="w-24 h-24 rounded-full object-cover border-4 border-blue-400 flex-shrink-0">
-                        <div class="flex-grow">
-                            <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">${item.character_name} says:</h3>
+                    <div class="bg-indigo-950/80 backdrop-blur-sm rounded-xl p-4 md:p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-6 transition-all duration-300 hover:bg-indigo-900/90 mx-auto" style="max-width: 800px;">
+                        <img src="${characterImageURL}" alt="${item.character_name}" class="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-4 border-blue-400 flex-shrink-0">
+                        <div class="flex-grow text-center sm:text-left">
+                            <h3 class="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">${item.character_name} says:</h3>
                             <div class="relative">
-                                <p class="advice-text">${item.advice}</p>
+                                <p class="advice-text text-lg md:text-xl">${item.advice}</p>
                             </div>
                         </div>
                     </div>
