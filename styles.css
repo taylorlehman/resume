@@ -1,0 +1,76 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.loader {
+    border: 5px solid #f3f3f3; /* Light grey */
+    border-top: 5px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+.sub-loader { /* Smaller loader for advice section */
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 10px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.btn-secondary {
+    @apply bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all duration-150 ease-in-out transform hover:scale-105;
+}
+
+.btn-tertiary { /* For the new advice button */
+    @apply bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 px-6 rounded-full shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105 text-base border-2 border-yellow-500;
+}
+
+.card {
+    @apply bg-white rounded-xl shadow-2xl px-8 md:px-10; 
+}
+
+/* Custom styles for drag and drop area */
+.drop-area {
+    @apply border-2 border-dashed border-slate-500 rounded-xl p-4 md:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ease-in-out;
+    min-height: 200px; /* Ensure enough space for drag and drop */
+}
+
+.drop-area.hover {
+    @apply border-blue-500 bg-slate-700;
+}
+
+#characterImage {
+    max-height: 300px;
+    object-fit: cover;
+    width: 200px;
+}
+
+.advice-text {
+    font-family: 'Lora', serif;
+    @apply text-slate-200 relative z-10;
+}
+
+.advice-text::before {
+    content: '"';
+    @apply text-4xl md:text-7xl text-purple-500/50 font-bold absolute -left-2 md:-left-5 -top-2 md:-top-5 z-0;
+}
+
+.advice-text::after {
+    content: '"';
+    @apply text-4xl md:text-7xl text-purple-500/50 font-bold absolute -right-2 md:-right-5 -bottom-4 md:-bottom-7 z-0;
+}
+
+/* Ensure touch targets are appropriately sized */
+.touch-manipulation {
+    touch-action: manipulation;
+} 
